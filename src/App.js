@@ -1,76 +1,34 @@
 import React, { Component } from "react";
 import styled from "styled-components";
 import "./App.css";
-import "react-bootstrap-table-next/dist/react-bootstrap-table2.min.css";
-import BootstrapTable from "react-bootstrap-table-next";
 import { addItem, deleteItem, getItems } from "./Database";
 import { randchoice } from "./Random";
-// import { RangeCell } from "./RangeCell";
-import cellEditFactory from "react-bootstrap-table2-editor";
-import PropTypes from "prop-types";
 
-class RangeCell extends React.Component {
-    static propTypes = {
-        value: PropTypes.number,
-        onUpdate: PropTypes.func.isRequired
-    };
-    static defaultProps = {
-        value: 0
-    };
-    getValue() {
-        console.log(this.range.value);
-        return parseInt(this.range.value, 10);
-    }
-    render() {
-        const { value, onUpdate, ...rest } = this.props;
-        return [
-            <input
-                {...rest}
-                key="range"
-                ref={node => (this.range = node)}
-                type="range"
-                min="0"
-                max="100"
-            />,
-            <button
-                key="submit"
-                className="btn btn-default"
-                onClick={() => onUpdate(this.getValue())}
-            >
-                Save
-            </button>
-        ];
-    }
-}
+const sortFunc = (ascending, column) => (a, b) => {
+    const a_val = column === "price" ? a["yelp_data"][column] : a[column];
+    const b_val = column === "price" ? b["yelp_data"][column] : b[column];
+    const difference = a_val < b_val ? -1 : a_val === b_val ? 0 : 1;
+    return (ascending ? 1 : -1) * difference;
+};
 class App extends Component {
-    columns = [
-        { dataField: "name", text: "Name", sort: true },
-        {
-            dataField: "weight",
-            text: "Weight",
-            sort: true,
-            editable: true,
-            editorRenderer: (
-                editorProps,
-                value,
-                row,
-                column,
-                rowIndex,
-                columnIndex
-            ) => <RangeCell {...editorProps} value={value} />
-        },
-        { dataField: "last_visited", text: "Last Visited", sort: true }
-    ];
     state = {
         originalItems: [],
         items: [],
         selected: "Click the sandwich to pick a spot",
         newName: "",
-        newWeight: 50
+        newWeight: 50,
+        sortBy: "name",
+        isSortAscending: true
     };
     componentDidMount() {
         getItems().then(body => {
-            this.setState({ items: body });
+            this.setState({
+                items: body
+                    .slice()
+                    .sort(
+                        sortFunc(this.state.isSortAscending, this.state.sortBy)
+                    )
+            });
         });
         this.randomItem = this.randomItem.bind(this);
         this.onChangeFunc = this.onChangeFunc.bind(this);
@@ -78,6 +36,15 @@ class App extends Component {
         this.addNew = this.addNew.bind(this);
         this.createRow = this.createRow.bind(this);
         this.deleteEntity = this.deleteEntity.bind(this);
+    }
+    sortByColumn(column) {
+        const isSortAscending =
+            this.state.sortBy === column ? !this.state.isSortAscending : true;
+        this.setState({
+            items: this.state.items.sort(sortFunc(isSortAscending, column)),
+            isSortAscending,
+            sortBy: column
+        });
     }
     randomItem() {
         if (this.state.items) {
@@ -105,10 +72,10 @@ class App extends Component {
     }
     onChangeFunc(event) {
         const items = [...this.state.items];
-        const name = event.target.name.split("_")[0];
-        const index = items.findIndex(i => i.name === name);
+        const index = +event.target.name.split("_")[0];
         items[index] = { ...items[index], weight: +event.target.value };
         this.setState({ items: items });
+        addItem(items[index].name, +event.target.value);
     }
     onChangeNew(event) {
         this.setState({ [event.target.name]: event.target.value });
@@ -145,7 +112,6 @@ class App extends Component {
             border: none;
             font-size: 2em;
             font-weight: 900;
-            margin: 1em;
         `;
         return (
             <tr key={i.name}>
@@ -158,9 +124,14 @@ class App extends Component {
                         maxvalue="100"
                         defaultValue={i.weight}
                         onChange={this.onChangeFunc}
-                    />({i.weight})
+                    />
                 </td>
-                <td>{i.last_visited}</td>
+                <td>{i.yelp_data.price}</td>
+                <td>
+                    {i.yelp_data.categories
+                        ? i.yelp_data.categories.map(c => c.title).join(", ")
+                        : ""}
+                </td>
                 <td>
                     <Styledbutton
                         name={i.name + "_delete"}
@@ -170,6 +141,36 @@ class App extends Component {
                     </Styledbutton>
                 </td>
             </tr>
+        );
+    }
+    createHeader(column) {
+        const isSortedBy = this.state.sortBy === column;
+
+        return (
+            <th
+                className={isSortedBy ? "sortby" : ""}
+                onClick={() => this.sortByColumn(column)}
+            >
+                {column.replace("_", " ") + " "}
+                <span
+                    className={
+                        isSortedBy && this.state.isSortAscending
+                            ? ""
+                            : "inactiveSort"
+                    }
+                >
+                    ▲
+                </span>
+                <span
+                    className={
+                        isSortedBy && !this.state.isSortAscending
+                            ? ""
+                            : "inactiveSort"
+                    }
+                >
+                    ▼
+                </span>
+            </th>
         );
     }
     render() {
@@ -184,25 +185,15 @@ class App extends Component {
                     />
                     <h1 className="App-title">{this.state.selected}</h1>
                 </header>
-                <br />
                 <div className="App-intro">
-                    <BootstrapTable
-                        keyField="name"
-                        data={this.state.items}
-                        columns={this.columns}
-                        striped={true}
-                        bordered={true}
-                        cellEdit={cellEditFactory({
-                            mode: "click",
-                            blurToSave: false
-                        })}
-                    />
                     <table>
                         <thead>
                             <tr>
-                                <th>Name</th>
-                                <th>Weight</th>
-                                <th>Last Visited</th>
+                                {this.createHeader("name")}
+                                {this.createHeader("weight")}
+                                {this.createHeader("price")}
+                                <th>Categories</th>
+                                <th>Delete</th>
                             </tr>
                         </thead>
                         <tbody>{this.state.items.map(this.createRow)}</tbody>

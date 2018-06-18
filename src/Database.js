@@ -1,3 +1,4 @@
+import debounce from "debounce";
 const API_URL = "http://wteapiapp.azurewebsites.net/items";
 function fetchAPI(method, body) {
     if (method === "GET") {
@@ -15,9 +16,10 @@ function fetchAPI(method, body) {
 export function getItems() {
     return fetchAPI("GET");
 }
-export function addItem(name, weight) {
+function addItemFunc(name, weight) {
     return fetchAPI("POST", { name, weight });
 }
+export const addItem = debounce(addItemFunc, 2000);
 export function deleteItem(name) {
     return fetchAPI("DELETE", { name });
 }
