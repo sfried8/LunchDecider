@@ -1,5 +1,5 @@
 import debounce from "debounce";
-const API_URL = "http://wteapiapp.azurewebsites.net/items";
+const API_URL = "https://wteapiapp.azurewebsites.net/items";
 function fetchAPI(method, body) {
     if (method === "GET") {
         return fetch(API_URL).then(body => body.json());
