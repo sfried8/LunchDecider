@@ -113,9 +113,16 @@ class App extends Component {
             font-size: 2em;
             font-weight: 900;
         `;
+        const StyledImg = styled.img`
+            max-width:100px;
+            max-height:100px;
+            display:inline-block;
+            margin:10px;
+            box-shadow:3px 3px 10px #388;
+        `
         return (
             <tr key={i.name}>
-                <td>{i.name}</td>
+                <td>{i.yelp_data.image_url ? <StyledImg src={i.yelp_data.image_url}/> : <div/>}{i.name}</td>
                 <td>
                     <input
                         type="range"
