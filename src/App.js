@@ -114,15 +114,15 @@ class App extends Component {
             font-weight: 900;
         `;
         const StyledImg = styled.img`
-            max-width:100px;
-            max-height:100px;
+            width:100%;
+            
             display:inline-block;
-            margin:10px;
-            box-shadow:3px 3px 10px #388;
+            margin:auto;
+            
         `
         return (
             <tr key={i.name}>
-                <td>{i.yelp_data.image_url ? <StyledImg src={i.yelp_data.image_url}/> : <div/>}{i.name}</td>
+                <td><div style={{ margin:"auto", borderRadius:"5px",overflow:"hidden", backgroundColor:"white", width:"200px",display:"flex",flexDirection:"column",boxShadow:"3px 3px 10px #388"}}><div style={{height:"150px", overflow:"hidden"}}>{i.yelp_data.image_url ? <StyledImg src={i.yelp_data.image_url}/> : <div/>}</div><div style={{margin:"10px auto"}}>{i.name}</div></div></td>
                 <td>
                     <input
                         type="range"
