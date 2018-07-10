@@ -4,9 +4,10 @@ import "./App.css";
 import { addItem, deleteItem, getItems } from "./Database";
 import { randchoice } from "./Random";
 
+const isYelpCategory = (cat)=>["price","distance"].indexOf(cat.toLowerCase()) >= 0
 const sortFunc = (ascending, column) => (a, b) => {
-    const a_val = column === "price" ? a["yelp_data"][column] : a[column];
-    const b_val = column === "price" ? b["yelp_data"][column] : b[column];
+    const a_val = isYelpCategory(column) ? a["yelp_data"][column] : a[column];
+    const b_val = isYelpCategory(column) ? b["yelp_data"][column] : b[column];
     const difference = a_val < b_val ? -1 : a_val === b_val ? 0 : 1;
     return (ascending ? 1 : -1) * difference;
 };
@@ -134,6 +135,7 @@ class App extends Component {
                     />
                 </td>
                 <td>{i.yelp_data.price}</td>
+                <td>{(0.000621371 * +i.yelp_data.distance).toFixed(1)} mi.</td>
                 <td>
                     {i.yelp_data.categories
                         ? i.yelp_data.categories.map(c => c.title).join(", ")
@@ -199,6 +201,7 @@ class App extends Component {
                                 {this.createHeader("name")}
                                 {this.createHeader("weight")}
                                 {this.createHeader("price")}
+                                {this.createHeader("distance")}
                                 <th>Categories</th>
                                 <th>Delete</th>
                             </tr>
