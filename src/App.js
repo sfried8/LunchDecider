@@ -2,8 +2,9 @@ import React, { Component } from "react";
 import styled from "styled-components";
 import "./App.css";
 import { addItem, deleteItem, getItems } from "./Database";
-import { randchoice } from "./Random";
+import Picker from "./Picker"
 
+const metersToMiles = (meters) =>(0.000621371 * +meters).toFixed(1)+" mi." 
 const isYelpCategory = (cat)=>["price","distance"].indexOf(cat.toLowerCase()) >= 0
 const sortFunc = (ascending, column) => (a, b) => {
     const a_val = isYelpCategory(column) ? a["yelp_data"][column] : a[column];
@@ -15,7 +16,6 @@ class App extends Component {
     state = {
         originalItems: [],
         items: [],
-        selected: "Click the sandwich to pick a spot",
         newName: "",
         newWeight: 50,
         sortBy: "name",
@@ -31,7 +31,6 @@ class App extends Component {
                     )
             });
         });
-        this.randomItem = this.randomItem.bind(this);
         this.onChangeFunc = this.onChangeFunc.bind(this);
         this.onChangeNew = this.onChangeNew.bind(this);
         this.addNew = this.addNew.bind(this);
@@ -46,30 +45,6 @@ class App extends Component {
             isSortAscending,
             sortBy: column
         });
-    }
-    randomItem() {
-        if (this.state.items) {
-            let choices = [];
-            this.state.items.forEach(i => {
-                choices = [...choices, ...Array(i.weight).fill(i.name)];
-            });
-            const spinningIntervalId = setInterval(
-                () =>
-                    this.setState({
-                        selected: randchoice(this.state.items).name
-                    }),
-                50
-            );
-            const logo = document.querySelector("#logo");
-            logo.classList.add("App-logo");
-            setTimeout(() => {
-                clearTimeout(spinningIntervalId);
-                this.setState({
-                    selected: randchoice(choices)
-                });
-                logo.classList.remove("App-logo");
-            }, 1200);
-        }
     }
     onChangeFunc(event) {
         const items = [...this.state.items];
@@ -135,7 +110,7 @@ class App extends Component {
                     />
                 </td>
                 <td>{i.yelp_data.price}</td>
-                <td>{(0.000621371 * +i.yelp_data.distance).toFixed(1)} mi.</td>
+                <td>{metersToMiles(i.yelp_data.distance)}</td>
                 <td>
                     {i.yelp_data.categories
                         ? i.yelp_data.categories.map(c => c.title).join(", ")
@@ -185,15 +160,7 @@ class App extends Component {
     render() {
         return (
             <div className="App">
-                <header className="App-header">
-                    <img
-                        id="logo"
-                        src="http://icons.iconarchive.com/icons/google/noto-emoji-food-drink/1024/32386-sandwich-icon.png"
-                        alt="logo"
-                        onClick={this.randomItem}
-                    />
-                    <h1 className="App-title">{this.state.selected}</h1>
-                </header>
+                <Picker items={this.state.items}/>
                 <div className="App-intro">
                     <table>
                         <thead>
